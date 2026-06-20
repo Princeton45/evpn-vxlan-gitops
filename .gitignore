@@ -1,0 +1,6 @@
+*.retry
+__pycache__/
+*.pyc
+.venv/
+secrets.env
+ansible/inventory/*.local
