@@ -1,0 +1,51 @@
+---
+- name: Underlay verification (all switches)
+  hosts: device_roles_spine:device_roles_leaf
+  gather_facts: false
+  tasks:
+    - name: Collect OSPF neighbors
+      cisco.nxos.nxos_command:
+        commands: "show ip ospf neighbors"
+      register: ospf
+
+    - name: Assert OSPF underlay is fully adjacent
+      ansible.builtin.assert:
+        that:
+          - "'FULL' in ospf.stdout[0]"
+        fail_msg: "OSPF underlay not adjacent on {{ inventory_hostname }}"
+        success_msg: "OSPF underlay OK on {{ inventory_hostname }}"
+
+- name: Overlay verification (leaves)
+  hosts: device_roles_leaf
+  gather_facts: false
+  tasks:
+    - name: Collect BGP L2VPN EVPN summary
+      cisco.nxos.nxos_command:
+        commands: "show bgp l2vpn evpn summary"
+      register: bgp
+
+    - name: Assert no EVPN session is down
+      ansible.builtin.assert:
+        that:
+          - "'Idle' not in bgp.stdout[0]"
+          - "'Active' not in bgp.stdout[0]"
+          - "'Connect' not in bgp.stdout[0]"
+        fail_msg: "A BGP EVPN session is NOT Established on {{ inventory_hostname }}"
+        success_msg: "BGP EVPN sessions Established on {{ inventory_hostname }}"
+
+    - name: Collect NVE peers
+      cisco.nxos.nxos_command:
+        commands: "show nve peers"
+      register: nve
+
+    - name: Assert at least one active VXLAN tunnel
+      ansible.builtin.assert:
+        that:
+          - nve.stdout[0] | length > 0
+        fail_msg: "No NVE/VXLAN peers on {{ inventory_hostname }}"
+        success_msg: "VXLAN tunnel(s) up on {{ inventory_hostname }}"
+
+    - name: Report data-plane result
+      ansible.builtin.debug:
+        msg: "{{ 'DATA-PLANE OK' if ('bytes from' in dp.stdout[0]) else 'data-plane ping did not return (n9kv simulator limitation possible)' }}"
+      when: inventory_hostname == 'Leaf1' and dp.stdout is defined

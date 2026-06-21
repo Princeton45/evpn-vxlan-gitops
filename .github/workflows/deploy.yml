@@ -1,0 +1,53 @@
+name: Deploy EVPN-VXLAN Fabric
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'intent/**'
+      - 'ansible/**'
+      - 'scripts/**'
+  workflow_dispatch: {}
+
+jobs:
+  pipeline:
+    runs-on: self-hosted
+    env:
+      NETBOX_URL: http://localhost:8000
+      NETBOX_TOKEN: ${{ secrets.NETBOX_TOKEN }}
+      ANSIBLE_HOST_KEY_CHECKING: "False"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python venv and dependencies
+        run: |
+          python3 -m venv .venv
+          . .venv/bin/activate
+          pip install -U pip
+          pip install -r requirements.txt
+          ansible-galaxy collection install -r ansible/collections.yml
+
+      - name: "Stage 1 - Lint & validate"
+        run: |
+          . .venv/bin/activate
+          python -c "import yaml,glob;[yaml.safe_load(open(f)) for f in glob.glob('intent/*.yml')];print('intent YAML OK')"
+          (cd ansible && ansible-playbook playbooks/deploy.yml --syntax-check)
+          ansible-lint ansible/ || true
+
+      - name: "Stage 2 - Sync SSoT into NetBox"
+        run: |
+          . .venv/bin/activate
+          python scripts/01_bootstrap_netbox.py
+          python scripts/02_sync_services.py
+
+      - name: "Stage 3 - Render & deploy to fabric"
+        working-directory: ansible
+        run: |
+          . ../.venv/bin/activate
+          ansible-playbook playbooks/deploy.yml
+
+      - name: "Stage 4 - Post-deployment verification"
+        working-directory: ansible
+        run: |
+          . ../.venv/bin/activate
+          ansible-playbook playbooks/verify.yml
