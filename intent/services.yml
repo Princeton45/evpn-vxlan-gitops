@@ -1,0 +1,6 @@
+vrfs:
+  - {name: TENANT1, l3vni: 50001, l3vni_vlan: 999}
+
+vlans:
+  - {id: 10, name: WEB, vni: 10010, vrf: TENANT1, svi_ip: 10.1.10.1, svi_mask: 24, prefix: 10.1.10.0/24}
+  - {id: 20, name: APP, vni: 10020, vrf: TENANT1, svi_ip: 10.1.20.1, svi_mask: 24, prefix: 10.1.20.0/24}

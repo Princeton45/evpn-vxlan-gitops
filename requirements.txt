@@ -1,0 +1,7 @@
+ansible
+ansible-lint
+pynetbox
+netmiko
+jmespath
+requests
+pyyaml

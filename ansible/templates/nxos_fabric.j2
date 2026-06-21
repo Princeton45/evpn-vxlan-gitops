@@ -1,0 +1,133 @@
+{% set cc = config_context %}
+{% if cc is iterable and cc is not mapping and cc is not string %}
+{%   set ns = namespace(merged={}) %}
+{%   for _ctx in cc %}{% set ns.merged = ns.merged | combine(_ctx, recursive=True) %}{% endfor %}
+{%   set cc = ns.merged %}
+{% endif %}
+
+hostname {{ inventory_hostname }}
+
+! ===== features =====
+feature ospf
+feature bgp
+feature interface-vlan
+feature vn-segment-vlan-based
+feature nv overlay
+nv overlay evpn
+feature scp-server
+
+! ===== management baseline (must always be present) =====
+username admin password 0 Cisco123! role network-admin
+vrf context management
+  ip route 0.0.0.0/0 192.168.100.1
+interface mgmt0
+  vrf member management
+  ip address {{ ansible_host }}/24
+  no shutdown
+
+! ===== loopbacks =====
+interface loopback0
+  ip address {{ cc.loopback0 }}/32
+  ip router ospf UNDERLAY area 0.0.0.0
+{% if cc.role == 'leaf' %}
+interface loopback1
+  ip address {{ cc.vtep_loopback1 }}/32
+  ip router ospf UNDERLAY area 0.0.0.0
+{% endif %}
+
+! ===== underlay point-to-point links =====
+{% for l in cc.underlay_links %}
+interface {{ l.interface }}
+  no switchport
+  mtu 9216
+  no ip redirects
+  ip address {{ l.ip }}/{{ l.mask }}
+  ip ospf network point-to-point
+  ip router ospf UNDERLAY area 0.0.0.0
+  no shutdown
+{% endfor %}
+
+! ===== OSPF underlay =====
+router ospf UNDERLAY
+  router-id {{ cc.router_id }}
+
+{% if cc.role == 'leaf' %}
+! ===== anycast gateway + tenant services =====
+fabric forwarding anycast-gateway-mac {{ cc.anycast_gw_mac }}
+
+vlan {{ cc.l3vni.vlan }}
+  vn-segment {{ cc.l3vni.vni }}
+vrf context {{ cc.l3vni.vrf }}
+  vni {{ cc.l3vni.vni }}
+  rd auto
+  address-family ipv4 unicast
+    route-target both auto
+    route-target both auto evpn
+interface Vlan{{ cc.l3vni.vlan }}
+  no shutdown
+  vrf member {{ cc.l3vni.vrf }}
+  ip forward
+
+{% for v in cc.l2vni %}
+vlan {{ v.vlan }}
+  vn-segment {{ v.vni }}
+interface Vlan{{ v.vlan }}
+  no shutdown
+  vrf member {{ v.vrf }}
+  ip address {{ v.svi_ip }}/{{ v.svi_mask }}
+  fabric forwarding mode anycast-gateway
+{% endfor %}
+
+interface nve1
+  no shutdown
+  host-reachability protocol bgp
+  source-interface loopback1
+{% for v in cc.l2vni %}
+  member vni {{ v.vni }}
+    ingress-replication protocol bgp
+{% endfor %}
+  member vni {{ cc.l3vni.vni }} associate-vrf
+
+evpn
+{% for v in cc.l2vni %}
+  vni {{ v.vni }} l2
+    rd auto
+    route-target import auto
+    route-target export auto
+{% endfor %}
+
+{% for p in cc.access_ports %}
+interface {{ p.interface }}
+  switchport
+  switchport mode access
+  switchport access vlan {{ p.vlan }}
+  no shutdown
+{% endfor %}
+{% endif %}
+
+! ===== BGP EVPN overlay =====
+router bgp {{ cc.bgp_asn }}
+  router-id {{ cc.router_id }}
+{% if cc.role == 'spine' %}
+  address-family l2vpn evpn
+    retain route-target all
+{% for client in cc.rr_clients %}
+  neighbor {{ client }}
+    remote-as {{ cc.bgp_asn }}
+    update-source loopback0
+    address-family l2vpn evpn
+      send-community extended
+      route-reflector-client
+{% endfor %}
+{% else %}
+{% for rr in cc.route_reflectors %}
+  neighbor {{ rr }}
+    remote-as {{ cc.bgp_asn }}
+    update-source loopback0
+    address-family l2vpn evpn
+      send-community extended
+{% endfor %}
+  vrf {{ cc.l3vni.vrf }}
+    address-family ipv4 unicast
+      advertise l2vpn evpn
+{% endif %}

@@ -1,0 +1,20 @@
+site: DC1
+fabric_asn: 65001
+anycast_gw_mac: "0000.2222.3333"
+
+devices:
+  - {name: Spine1, role: spine, mgmt: 192.168.100.21, loopback0: 10.0.0.1}
+  - {name: Spine2, role: spine, mgmt: 192.168.100.22, loopback0: 10.0.0.2}
+  - {name: Leaf1,  role: leaf,  mgmt: 192.168.100.23, loopback0: 10.0.0.3, loopback1: 10.100.0.3}
+  - {name: Leaf2,  role: leaf,  mgmt: 192.168.100.24, loopback0: 10.0.0.4, loopback1: 10.100.0.4}
+
+# a = spine side, b = leaf side
+links:
+  - {a: Spine1, a_int: Ethernet1/1, a_ip: 10.1.1.0, b: Leaf1, b_int: Ethernet1/1, b_ip: 10.1.1.1, mask: 31}
+  - {a: Spine1, a_int: Ethernet1/2, a_ip: 10.1.1.2, b: Leaf2, b_int: Ethernet1/1, b_ip: 10.1.1.3, mask: 31}
+  - {a: Spine2, a_int: Ethernet1/1, a_ip: 10.1.1.4, b: Leaf1, b_int: Ethernet1/2, b_ip: 10.1.1.5, mask: 31}
+  - {a: Spine2, a_int: Ethernet1/2, a_ip: 10.1.1.6, b: Leaf2, b_int: Ethernet1/2, b_ip: 10.1.1.7, mask: 31}
+
+access_ports:
+  - {device: Leaf1, interface: Ethernet1/3, vlan: 10}
+  - {device: Leaf2, interface: Ethernet1/3, vlan: 10}

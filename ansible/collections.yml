@@ -1,0 +1,4 @@
+collections:
+  - name: cisco.nxos
+  - name: netbox.netbox
+  - name: ansible.netcommon

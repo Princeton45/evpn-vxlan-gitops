@@ -1,0 +1,9 @@
+plugin: netbox.netbox.nb_inventory
+api_endpoint: http://localhost:8000
+token: mqtQgzltkHA29cxarrlqAi1U9LvJKKcZhzV3wVxj
+validate_certs: false
+config_context: true            # pull each device's merged local_context_data
+group_by:
+  - device_roles                # -> groups named "spine" and "leaf"
+compose:
+  ansible_host: primary_ip4.address.split('/')[0]   # mgmt IP without mask

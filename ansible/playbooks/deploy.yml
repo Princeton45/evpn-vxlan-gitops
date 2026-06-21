@@ -1,0 +1,41 @@
+---
+- name: Render and deploy EVPN-VXLAN fabric from NetBox SSoT
+  hosts: device_roles_leaf:device_roles_spine
+  gather_facts: false
+  vars:
+    render_dir: "{{ playbook_dir }}/../rendered"
+    deploy_method: "{{ method | default('merge') }}"   # merge (safe) | replace
+  tasks:
+    - name: Create render directory on control node
+      delegate_to: localhost
+      run_once: true
+      ansible.builtin.file:
+        path: "{{ render_dir }}"
+        state: directory
+
+    - name: Render NX-OS config from template + NetBox config_context
+      delegate_to: localhost
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../templates/nxos_fabric.j2"
+        dest: "{{ render_dir }}/{{ inventory_hostname }}.cfg"
+
+    # ---------- Method A: safe line merge (default) ----------
+    - name: Apply configuration (merge)
+      when: deploy_method == 'merge'
+      cisco.nxos.nxos_config:
+        src: "{{ render_dir }}/{{ inventory_hostname }}.cfg"
+        save_when: modified
+
+    # ---------- Method B: declarative configure replace ----------
+    - name: Copy rendered config to bootflash
+      when: deploy_method == 'replace'
+      cisco.nxos.nxos_file_copy:
+        local_file: "{{ render_dir }}/{{ inventory_hostname }}.cfg"
+        remote_file: "intended.cfg"
+        file_system: "bootflash:"
+
+    - name: Declarative configure replace
+      when: deploy_method == 'replace'
+      cisco.nxos.nxos_config:
+        replace: config
+        replace_src: "bootflash:intended.cfg"
