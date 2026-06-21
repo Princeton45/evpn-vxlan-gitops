@@ -44,6 +44,10 @@ jobs:
         working-directory: ansible
         run: |
           . ../.venv/bin/activate
+          ansible-inventory --graph
+          COUNT=$(ansible-inventory --list | python3 -c "import sys,json;print(len(json.load(sys.stdin).get('_meta',{}).get('hostvars',{})))")
+          echo "NetBox inventory returned $COUNT hosts"
+          test "$COUNT" -gt 0
           ansible-playbook playbooks/deploy.yml
 
       - name: "Stage 4 - Post-deployment verification"
