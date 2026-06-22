@@ -299,32 +299,11 @@ Adding a tenant VLAN to the entire fabric is **one line and a push** — no swit
 
 ---
  
-## Design decisions & trade-offs
- 
-- **NetBox as SSoT vs. flat YAML in Ansible `host_vars`** — flat files work for a handful of switches and fall apart at scale (copy-paste errors, duplicate IPs, no validation). NetBox provides relational integrity, IPAM conflict detection, and a queryable API, at the cost of an additional service to run.
-- **Config merge vs. `configure replace`** — declarative `configure replace` would give true anti-drift, but NX-OS requires the candidate to be a *complete* running-config (it rejects a file missing the `version` header, `vlan 1`, and the auto-generated `snmp-server user admin` line, which carries device-specific hashes that can't be templated). A hand-rolled partial template is therefore valid for a merge but not a clean replace. The path to true anti-drift on NX-OS is the resource modules (`nxos_vlans`, `nxos_bgp_global`, …) with `state: overridden` — see Roadmap.
-- **`local_context_data` (rendered intent blob) vs. pure native-object lookups** — the relational truth is stored as native NetBox objects (VRF/VLAN/L2VPN/IPAM, so IPAM validation is real), and a clean per-device JSON blob is projected for templating. This keeps the Jinja template simple while NetBox still enforces correctness.
-- **OSPF underlay + iBGP overlay + RR vs. eBGP everywhere** — the iBGP+RR pattern is chosen for clarity; eBGP-everywhere is the common hyperscaler alternative.
-- **Self-hosted runner vs. GitHub-hosted** — required, since only a runner inside the network can reach the lab; the trade-off is owning the runner's security (private repo, outbound-only).
----
- 
-## Notable engineering challenges
+## Challenges I faced
  
 A few non-obvious problems solved while building this, with their root causes:
  
 - **Nexus 9000v management interface had no link** — `mgmt0` was admin-up but showed `Active connector: Link Down` with zero RX. Root cause: the Nexus 9000v only supports the **`e1000`** QEMU adapter type; the wrong NIC model meant no interface ever got carrier.
 - **NetBox `config_context` arrives as a list, not a dict** — the `nb_inventory` plugin returns it as a single-element list, so the template normalizes it by merging into a dict using a Jinja2 `namespace` object (variables set inside a `{% for %}` loop don't survive the loop).
-- **`configure replace` pre-check failure** — NX-OS rejected a partial candidate config (missing `version`, `vlan 1`, `snmp-server user admin`), confirming replace requires a complete running-config. It failed before applying, leaving the fabric untouched.
 - **A "green but did nothing" pipeline** — a missing `pytz` dependency made the NetBox inventory plugin fail silently and fall back to localhost; the deploy reported "no hosts matched" yet exited 0. Fixed by adding the dependency and by asserting the inventory returns more than zero hosts.
 - **Self-hosted runner wouldn't start under systemd** — exit `203/EXEC` on Rocky Linux because SELinux blocks systemd from executing scripts under `/home`; relocating the runner to `/opt` and relabeling resolved it.
-- **NetBox API token rejected (`Invalid v1 token`)** — NetBox 4.5+ introduced a new v2 token format; the client uses the legacy header, so a v1 token had to be created explicitly.
----
- 
-## Roadmap
- 
-- **True anti-drift via resource modules** — replace the merge-from-template deploy with `cisco.nxos` resource modules (`state: overridden`) for per-resource drift removal and genuine idempotency.
-- **Secrets management** — move switch credentials and the NetBox token to HashiCorp Vault or SOPS-encrypted vars.
-- **Data-plane testing in CI** — automated host-to-host reachability (or leaf pings sourced from unique per-leaf VRF loopbacks) so the pipeline proves forwarding, not just control-plane health.
-- **Pull-request CI** — run lint + dry-run (`--check`) on PRs so review happens before anything reaches `main`.
-- **Scale-out & multi-site** — EVPN multi-site / DCI and NetBox config contexts keyed by site/role.
-- **Observability** — stream telemetry to a dashboard rather than pass/fail asserts.
