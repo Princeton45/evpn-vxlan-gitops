@@ -191,7 +191,11 @@ Every leaf hosts the same SVI IP and anycast MAC for a given subnet (e.g. `10.1.
 - A **VRF** (`TENANT1`) provides multi-tenancy — an isolated routing table with reusable IP space.
 - **L2VNIs** (e.g. VNI 10010 ↔ VLAN 10) stretch a single L2 segment across the fabric.
 - An **L3VNI** (VNI 50001, VLAN 999) is the transit VNI for **symmetric IRB** — inter-subnet routing is sent into the L3VNI, carried across the fabric, and routed out at the egress leaf.
-![show bgp l2vpn evpn summary and show nve peers on a leaf](docs/img/evpn-control-plane.png)
+
+![l2vpn](https://github.com/Princeton45/evpn-vxlan-gitops/blob/main/images/l2vpn.png)
+
+![nve](https://github.com/Princeton45/evpn-vxlan-gitops/blob/main/images/nve.png)
+
 *Overlay health: BGP L2VPN EVPN sessions Established to both route-reflector spines, and active NVE (VXLAN tunnel) peers between the leaf VTEPs.*
  
 ---
