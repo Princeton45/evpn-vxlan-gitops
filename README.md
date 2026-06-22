@@ -32,10 +32,7 @@ flowchart LR
 7. [How a change flows end to end](#how-a-change-flows-end-to-end)
 8. [The CI/CD pipeline](#the-cicd-pipeline)
 9. [The GitOps loop in action](#the-gitops-loop-in-action)
-10. [Design decisions & trade-offs](#design-decisions--trade-offs)
-11. [Notable engineering challenges](#notable-engineering-challenges)
-12. [Roadmap](#roadmap)
- 
+9. [Challenges I faced](#challenges-I-faced)
 ---
  
 ## Why this exists
