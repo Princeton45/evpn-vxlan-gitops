@@ -236,8 +236,8 @@ evpn-vxlan-gitops/
 - **`nxos_fabric.j2`** — one template rendering a complete NX-OS config per device, branching on `config_context.role`. Spines get underlay OSPF + BGP route-reflector config; leaves additionally get the anycast gateway, VLAN/VNI/SVI config, the NVE (VTEP) interface, EVPN route-targets, and access ports. It always renders the management baseline so a push can't cause lockout.
 - **`deploy.yml`** — renders the template per host from its NetBox `config_context` and applies it with `cisco.nxos.nxos_config` over an SSH `network_cli` connection.
 - **`verify.yml`** — runs `show` commands and asserts on them: OSPF must be FULL, no BGP-EVPN session may be down, and every leaf must have at least one NVE peer.
-![NetBox device inventory showing the four fabric devices with roles and primary management IPs](docs/img/netbox-devices.png)
-*NetBox as the source of truth: the four devices with their roles and primary management IPs (the primary IP becomes Ansible's `ansible_host`).*
+
+![netbox](https://github.com/Princeton45/evpn-vxlan-gitops/blob/main/images/netbox.png)
  
 ---
  
@@ -252,9 +252,7 @@ The path a change takes from an edit to a switch:
 5. `deploy.yml` pushes the rendered config to each switch over SSH.
 6. `verify.yml` proves the result with `show bgp l2vpn evpn summary`, `show ip ospf neighbors`, `show nve peers`, and assertions on each.
 The relational model in NetBox (which enforces correctness) is projected into a flat, render-friendly `local_context_data` blob per device; `nb_inventory` exposes it as `config_context`, and the Jinja template consumes it directly. NetBox enforces the truth while the blob keeps templating simple.
- 
-![netbox](https://github.com/Princeton45/evpn-vxlan-gitops/blob/main/images/netbox.png)
----
+ ---
  
 ## The CI/CD pipeline
  
