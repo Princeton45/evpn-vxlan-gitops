@@ -41,11 +41,11 @@ flowchart LR
  
 ## Why this exists
  
-In a traditional network the "source of truth" is whatever happens to be running on the switches, plus spreadsheets and tribal knowledge. That doesn't scale and it **drifts** — a manual change gets made, nobody documents it, and the network and its documentation diverge.
+In a traditional network the "source of truth" is whatever happens to be running on the switches, plus spreadsheets and tribal knowledge. That doesn't scale and it drifts. A manual change gets made, nobody documents it, & the network & its documentation diverge.
  
 This project inverts that with two ideas:
  
-- **Single Source of Truth (SSoT):** NetBox holds the *intended* state — every device, interface, IP, VRF, VLAN, and VLAN-to-VNI mapping — in a relational database that enforces correctness (for example, it refuses to assign the same IP twice). Switches are never configured by hand.
+- **Single Source of Truth (SSoT):** NetBox holds the *intended* state. Every device, interface, IP, VRF, VLAN, and VLAN-to-VNI mapping in a relational database that enforces correctness (for example, it refuses to assign the same IP twice). Switches are never configured by hand.
 - **GitOps:** the *input* to that source of truth is declarative YAML in Git. Every change is a reviewable, revertible, auditable commit, and a pipeline reconciles Git → NetBox → switches automatically.
 The result: configuration drift is eliminated by keeping documentation (NetBox) and running state (the switches) in sync through automation, and every network change becomes a peer-reviewable, testable Git commit. Hand-editing config for 4 switches is tedious; for 400 it's an outage waiting to happen. NetBox plus a pipeline is what makes that tractable.
  
