@@ -35,7 +35,6 @@ flowchart LR
 10. [Design decisions & trade-offs](#design-decisions--trade-offs)
 11. [Notable engineering challenges](#notable-engineering-challenges)
 12. [Roadmap](#roadmap)
-> Screenshots referenced below live in `docs/img/`.
  
 ---
  
