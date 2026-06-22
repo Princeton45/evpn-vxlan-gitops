@@ -220,7 +220,7 @@ evpn-vxlan-gitops/
 │   │   ├── netbox_inv.yml         # NetBox dynamic inventory (nb_inventory) config
 │   │   └── group_vars/all.yml     # NX-OS connection vars (network_cli, creds)
 │   ├── templates/
-│   │   └── nxos_fabric.j2         # single template, branches on spine/leaf role
+│   │   └── nxos_fabric.j2         # single template, branches on device_roles_spine/device_roles_leaf role
 │   └── playbooks/
 │       ├── deploy.yml             # render from NetBox + push config
 │       └── verify.yml             # assert OSPF / BGP-EVPN / NVE health
