@@ -245,13 +245,13 @@ evpn-vxlan-gitops/
  
 The path a change takes from an edit to a switch:
  
-1. **Edit `intent/services.yml`** (e.g. add a VLAN) and `git push`.
-2. **`02_sync_services.py` writes that intent into NetBox**, which validates it (IPAM rejects conflicts) and stores it relationally.
-3. **Ansible's `nb_inventory` plugin queries the NetBox API**, gets the devices grouped by role (`spine`/`leaf`), and pulls each device's `config_context` plus its **primary IP**, which becomes `ansible_host` — that's how Ansible knows which IP to SSH to.
-4. **`nxos_fabric.j2` renders a full NX-OS config** per device from that context.
-5. **`deploy.yml` pushes the rendered config** to each switch over SSH.
-6. **`verify.yml` proves the result** with `show bgp l2vpn evpn summary`, `show ip ospf neighbors`, `show nve peers`, and assertions on each.
-The relational model in NetBox (which enforces correctness) is projected into a flat, render-friendly `local_context_data` blob per device; `nb_inventory` exposes it as `config_context`, and the Jinja template consumes it directly — so NetBox enforces the truth while the blob keeps templating simple.
+1. Edit `intent/services.yml` (e.g. add a VLAN) and `git push`.
+2. `02_sync_services.py` writes that intent into NetBox, which validates it (IPAM rejects conflicts) and stores it relationally.
+3. Ansible's `nb_inventory` plugin queries the NetBox API, gets the devices grouped by role (`device_roles_spine`/`device_roles_leaf`), and pulls each device's `config_context` plus its primary IP, which becomes `ansible_host` — that's how Ansible knows which IP to SSH to.
+4. `nxos_fabric.j2` renders a full NX-OS config per device from that context.
+5. `deploy.yml` pushes the rendered config to each switch over SSH.
+6. `verify.yml` proves the result with `show bgp l2vpn evpn summary`, `show ip ospf neighbors`, `show nve peers`, and assertions on each.
+The relational model in NetBox (which enforces correctness) is projected into a flat, render-friendly `local_context_data` blob per device; `nb_inventory` exposes it as `config_context`, and the Jinja template consumes it directly. NetBox enforces the truth while the blob keeps templating simple.
  
 ![netbox](https://github.com/Princeton45/evpn-vxlan-gitops/blob/main/images/netbox.png)
 ---
@@ -271,7 +271,7 @@ flowchart LR
     ST4 -->|any fail| RED["Pipeline red<br/>fabric-health gate"]
 ```
  
-A **self-hosted runner** is used because GitHub's cloud runners cannot reach a fabric inside a private lab. The runner polls GitHub outbound (no inbound exposure) and, when a job arrives, runs locally — reaching NetBox on `localhost` and the switches over the management network. The repository is **private**, because a self-hosted runner attached to a public repo is a security risk (a forked PR could execute code on a machine inside the network).
+A self-hosted runner is used because GitHub's cloud runners cannot reach a fabric inside a private lab. The runner polls GitHub outbound (no inbound exposure) and, when a job arrives, runs locally — reaching NetBox on `localhost` and the switches over the management network. The repository is private, because a self-hosted runner attached to a public repo is a security risk (a forked PR could execute code on a machine inside the network).
  
 | Stage | What it does | Why it matters |
 |---|---|---|
