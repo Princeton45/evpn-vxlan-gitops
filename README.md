@@ -109,7 +109,8 @@ NetBox sits between declarative intent and the devices: Git is what humans edit,
 - **Cloud (vmnet1)** — bridges the GNS3 management segment to a VMware host-only network so the automation host can SSH to every `mgmt0`.
 Two planes are deliberately separated: the **data plane** (`Ethernet1/x` spine-leaf links carrying underlay + VXLAN overlay) and the **management plane** (`mgmt0` → MGT-SW1 → Cloud → automation host). Out-of-band management means a switch stays reachable even if a bad config push breaks the data plane.
  
-![Endpoint1 pinging Endpoint2 across the VXLAN fabric](docs/img/dataplane-ping.png)
+![endpoint-ping](https://github.com/Princeton45/evpn-vxlan-gitops/blob/main/images/endpoint-ping.png)
+
 *Data-plane proof: Endpoint1 reaching Endpoint2 across the fabric, with traffic VXLAN-encapsulated between the leaf VTEPs.*
  
 ---
