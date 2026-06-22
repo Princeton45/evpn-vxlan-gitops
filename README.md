@@ -1,6 +1,6 @@
 # EVPN-VXLAN Fabric Automation — GitOps with NetBox as Source of Truth
  
-A GitOps pipeline that treats **NetBox** as the single source of truth for a Cisco Nexus **EVPN-VXLAN** data-center fabric. Network intent is declared as YAML in Git; a CI/CD pipeline syncs it into NetBox, renders Cisco NX-OS configuration with Jinja2, deploys it to the switches, and verifies fabric health (OSPF, BGP-EVPN, VXLAN) before passing. A commit that would break the fabric fails the pipeline instead of breaking the network.
+A GitOps pipeline that treats NetBox as the single source of truth for a Cisco Nexus EVPN-VXLAN data-center fabric. Network intent is declared as YAML in Git; a CI/CD pipeline syncs it into NetBox, renders Cisco NX-OS configuration with Jinja2, deploys it to the switches, and verifies fabric health (OSPF, BGP-EVPN, VXLAN) before passing. A commit that would break the fabric fails the pipeline instead of breaking the network.
  
 ```mermaid
 flowchart LR
@@ -100,14 +100,13 @@ NetBox sits between declarative intent and the devices: Git is what humans edit,
 
 *The full GNS3 fabric: a 2-spine / 2-leaf Clos design on Cisco Nexus 9000v with an out-of-band management network bridged to the automation host.*
  
-**Reading the topology:**
  
-- **Spine1 / Spine2** — the backbone. Every leaf connects to every spine, so any leaf is one hop from any other. Spines run the underlay IGP and act as **BGP route reflectors** for the overlay. They are not VTEPs, they only forward encapsulated packets and reflect routes.
-- **Leaf1 / Leaf2** — the access tier and the **VTEPs** (VXLAN Tunnel Endpoints). They terminate endpoints, own the distributed anycast gateway, and perform VXLAN encap/decap.
+- **Spine1 / Spine2** — the backbone. Every leaf connects to every spine, so any leaf is one hop from any other. Spines run the underlay IGP and act as BGP route reflectors for the overlay. They are not VTEPs, they only forward encapsulated packets and reflect routes.
+- **Leaf1 / Leaf2** — the access tier and the VTEPs (VXLAN Tunnel Endpoints). They terminate endpoints, own the distributed anycast gateway, and perform VXLAN encap/decap.
 - **Endpoint1 / Endpoint2** — test hosts on `Ethernet1/3` of each leaf, both in VLAN 10. End-to-end ping between them is the data-plane proof that traffic crosses the VXLAN fabric.
-- **MGT-SW1** — the management switch; every device's `mgmt0` connects here, forming an **out-of-band management network** fully separate from the data-plane links.
+- **MGT-SW1** — the management switch; every device's `mgmt0` connects here, forming an out-of-band management network fully separate from the data-plane links.
 - **Cloud (vmnet1)** — bridges the GNS3 management segment to a VMware host-only network so the automation host can SSH to every `mgmt0`.
-Two planes are deliberately separated: the **data plane** (`Ethernet1/x` spine-leaf links carrying underlay + VXLAN overlay) and the **management plane** (`mgmt0` → MGT-SW1 → Cloud → automation host). Out-of-band management means a switch stays reachable even if a bad config push breaks the data plane.
+Two planes are deliberately separated: the data plane (`Ethernet1/x` spine-leaf links carrying underlay + VXLAN overlay) and the management plane (`mgmt0` → MGT-SW1 → Cloud → automation host). Out-of-band management means a switch stays reachable even if a bad config push breaks the data plane.
  
 ![endpoint-ping](https://github.com/Princeton45/evpn-vxlan-gitops/blob/main/images/endpoint-ping.png)
 
@@ -127,7 +126,7 @@ Everything runs on a single Linux Mint laptop.
  
 ![ansible-node](https://github.com/Princeton45/evpn-vxlan-gitops/blob/main/images/ansible-node.png)
 
-The automation VM has two NICs: a **NAT** interface (vmnet8) for outbound internet (packages, Docker images, `github.com`) and a **host-only (vmnet1)** interface for the lab management network `192.168.100.0/24`, shared with the GNS3 Cloud node. The self-hosted runner reaches GitHub *outbound* over NAT and the switches over host-only, so no inbound firewall exposure into the lab is required.
+The automation VM has two NICs: a **NAT** interface (vmnet8) for outbound internet (packages, Docker images, `github.com`) and a host-only (vmnet1) interface for the lab management network `192.168.100.0/24`, shared with the GNS3 Cloud node. The self-hosted runner reaches GitHub *outbound* over NAT and the switches over host-only, so no inbound firewall exposure into the lab is required.
 
 ![vmnet8](https://github.com/Princeton45/evpn-vxlan-gitops/blob/main/images/vmnet8.png)
  
@@ -153,13 +152,13 @@ The automation VM has two NICs: a **NAT** interface (vmnet8) for outbound intern
  
 EVPN-VXLAN is two independent networks stacked together:
  
-- **Underlay** — plain IP reachability between switches. Its only job is to let every VTEP loopback reach every other VTEP loopback. This uses **OSPF** in area 0 over `/31` point-to-point links, carrying nothing but loopbacks and transit links.
+- **Underlay** — plain IP reachability between switches. Its only job is to let every VTEP loopback reach every other VTEP loopback. This uses OSPF in area 0 over `/31` point-to-point links, carrying nothing but loopbacks and transit links.
 - **Overlay** — the tenant networks, carried *inside* VXLAN tunnels and advertised by **BGP EVPN**, riding on top of underlay reachability.
 Separating them decouples "can the boxes reach each other" from "what tenants/VLANs exist." Tenants and MAC addresses can be added to the overlay without touching the underlay at all.
  
 ### VXLAN
  
-VXLAN wraps an Ethernet frame inside a UDP/IP packet (MAC-in-UDP) tagged with a 24-bit **VNI** giving ~16 million segments versus ~4,094 usable VLANs, and letting an L2 segment stretch across an L3 fabric. The leaves performing encap/decap are **VTEPs**, sourced from `Loopback1`.
+VXLAN wraps an Ethernet frame inside a UDP/IP packet (MAC-in-UDP) tagged with a 24-bit VNI giving ~16 million segments versus ~4,094 usable VLANs, and letting an L2 segment stretch across an L3 fabric. The leaves performing encap/decap are VTEPs, sourced from `Loopback1`.
  
 ### EVPN — a BGP control plane instead of flood-and-learn
  
@@ -175,11 +174,11 @@ Classic VXLAN floods to learn MAC addresses. EVPN replaces that with BGP: each l
  
 ### iBGP with route reflectors
  
-The overlay runs **iBGP in a single AS (65001)**. Because iBGP requires a full mesh (`n(n-1)/2` sessions), the spines act as **route reflectors**: leaves peer only with the spines, which reflect EVPN routes between leaves. A new leaf adds two sessions (one per spine) instead of one per existing leaf. (An eBGP-everywhere design with a unique AS per device is the common hyperscaler alternative; this lab uses OSPF + iBGP + RR for clarity.)
+The overlay runs iBGP in a single AS (65001). Because iBGP requires a full mesh (`n(n-1)/2` sessions), the spines act as route reflectors: leaves peer only with the spines, which reflect EVPN routes between leaves. A new leaf adds two sessions (one per spine) instead of one per existing leaf. (An eBGP-everywhere design with a unique AS per device is the common hyperscaler alternative; this lab uses OSPF + iBGP + RR for clarity.)
  
 ### Distributed anycast gateway
  
-Every leaf hosts the **same** SVI IP and anycast MAC for a given subnet (e.g. `10.1.10.1` on both leaves), so a host's default gateway is always local to its leaf — first-hop routing happens on the directly-connected switch with no hair-pinning. A workload can move between leaves without its gateway IP or MAC changing.
+Every leaf hosts the same SVI IP and anycast MAC for a given subnet (e.g. `10.1.10.1` on both leaves), so a host's default gateway is always local to its leaf — first-hop routing happens on the directly-connected switch with no hair-pinning. A workload can move between leaves without its gateway IP or MAC changing.
  
 > One consequence worth knowing: because the anycast gateway IP is identical on every leaf, a remote-host ping sourced *from* a leaf's anycast SVI will not return (the remote leaf answers locally, owning the same IP). Host-to-host traffic works normally; switch-sourced testing must use a unique per-leaf loopback. This is why verification relies on control-plane assertions rather than a leaf-sourced data-plane ping.
  
