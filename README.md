@@ -294,9 +294,9 @@ Adding a tenant VLAN to the entire fabric is **one line and a push** — no swit
 2. `git commit -m "Add DB VLAN 30 / VNI 10030" && git push`
 3. The pipeline validates → writes VLAN 30 / VNI 10030 into NetBox (IPAM checks for conflicts) → re-renders every leaf from NetBox and pushes config → verifies BGP/NVE health.
 4. If any switch's health check fails, the pipeline goes red before the change can become an outage.
-![A git diff adding a VLAN to intent/services.yml alongside show vlan on a leaf confirming the new VLAN](docs/img/gitops-add-vlan.png)
-*The whole loop in one image: a VLAN added in a Git commit appears in `show vlan` on the leaf — with no manual switch configuration.*
- 
+
+![vlan30](https://github.com/Princeton45/evpn-vxlan-gitops/blob/main/images/vlan30.png)
+
 ---
  
 ## Design decisions & trade-offs
