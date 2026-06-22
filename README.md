@@ -96,12 +96,13 @@ NetBox sits between declarative intent and the devices: Git is what humans edit,
  
 ## Lab topology
  
-![GNS3 EVPN-VXLAN topology: two spines, two leaves, a management switch, a cloud node, and two endpoints](docs/img/gns3-topology.png)
+ ![gns3](https://github.com/Princeton45/evpn-vxlan-gitops/blob/main/images/gns3.png)
+
 *The full GNS3 fabric: a 2-spine / 2-leaf Clos design on Cisco Nexus 9000v with an out-of-band management network bridged to the automation host.*
  
 **Reading the topology:**
  
-- **Spine1 / Spine2** — the backbone. Every leaf connects to every spine, so any leaf is one hop from any other. Spines run the underlay IGP and act as **BGP route reflectors** for the overlay. They are not VTEPs — they only forward encapsulated packets and reflect routes.
+- **Spine1 / Spine2** — the backbone. Every leaf connects to every spine, so any leaf is one hop from any other. Spines run the underlay IGP and act as **BGP route reflectors** for the overlay. They are not VTEPs, they only forward encapsulated packets and reflect routes.
 - **Leaf1 / Leaf2** — the access tier and the **VTEPs** (VXLAN Tunnel Endpoints). They terminate endpoints, own the distributed anycast gateway, and perform VXLAN encap/decap.
 - **Endpoint1 / Endpoint2** — test hosts on `Ethernet1/3` of each leaf, both in VLAN 10. End-to-end ping between them is the data-plane proof that traffic crosses the VXLAN fabric.
 - **MGT-SW1** — the management switch; every device's `mgmt0` connects here, forming an **out-of-band management network** fully separate from the data-plane links.
@@ -123,6 +124,8 @@ Everything runs on a single Linux Mint laptop.
 | VMware Workstation | Natively on the laptop | Hosts the automation VM |
 | Rocky Linux 9 VM (`AnsibleNode`) | Inside VMware Workstation | Runs Ansible, the Python sync scripts, NetBox (Docker), and the GitHub Actions self-hosted runner |
  
+ [add picture of Ansible VM]
+
 The automation VM has **two NICs**: a **NAT** interface for outbound internet (packages, Docker images, `github.com`) and a **host-only (vmnet1)** interface for the lab management network `192.168.100.0/24`, shared with the GNS3 Cloud node. The self-hosted runner reaches GitHub *outbound* over NAT and the switches over host-only, so no inbound firewall exposure into the lab is required.
  
 **Addressing plan:**
