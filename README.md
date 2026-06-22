@@ -174,7 +174,11 @@ Classic VXLAN floods to learn MAC addresses. EVPN replaces that with BGP: each l
  
 ### iBGP with route reflectors
  
-The overlay runs iBGP in a single AS (65001). Because iBGP requires a full mesh (`n(n-1)/2` sessions), the spines act as route reflectors: leaves peer only with the spines, which reflect EVPN routes between leaves. A new leaf adds two sessions (one per spine) instead of one per existing leaf. (An eBGP-everywhere design with a unique AS per device is the common hyperscaler alternative; this lab uses OSPF + iBGP + RR for clarity.)
+The overlay runs iBGP in a single AS (65001). Because standard iBGP requires a full mesh, the spines act as Route Reflectors: leaves peer only with the spines, which reflect EVPN routes between them. 
+
+Consequently, adding a new leaf only requires establishing two BGP sessions (one per spine) instead of needing a separate connection to every other leaf already in the network. 
+
+*(While an eBGP-everywhere design with a unique AS per device is the common hyperscaler alternative, this lab uses OSPF + iBGP + RR for clarity).
  
 ### Distributed anycast gateway
  
