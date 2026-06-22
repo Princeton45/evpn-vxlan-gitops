@@ -123,9 +123,9 @@ Everything runs on a single Linux Mint laptop.
 |---|---|---|
 | GNS3 | Natively on the laptop | Hosts the virtual Nexus 9000v fabric |
 | VMware Workstation | Natively on the laptop | Hosts the automation VM |
-| Rocky Linux 9 VM (`AnsibleNode`) | Inside VMware Workstation | Runs Ansible, the Python sync scripts, NetBox (Docker), and the GitHub Actions self-hosted runner |
+| Rocky Linux 10 VM (`AnsibleNode`) | Inside VMware Workstation | Runs Ansible, the Python sync scripts, NetBox (Docker), and the GitHub Actions self-hosted runner |
  
- [add picture of Ansible VM]
+![ansible-node](https://github.com/Princeton45/evpn-vxlan-gitops/blob/main/images/ansible-node.png)
 
 The automation VM has **two NICs**: a **NAT** interface for outbound internet (packages, Docker images, `github.com`) and a **host-only (vmnet1)** interface for the lab management network `192.168.100.0/24`, shared with the GNS3 Cloud node. The self-hosted runner reaches GitHub *outbound* over NAT and the switches over host-only, so no inbound firewall exposure into the lab is required.
  
