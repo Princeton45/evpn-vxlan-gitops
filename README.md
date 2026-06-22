@@ -281,7 +281,6 @@ A self-hosted runner is used because GitHub's cloud runners cannot reach a fabri
 A guard worth highlighting: Ansible exits 0 when no hosts match, so a broken inventory can produce a *green* pipeline that silently configured nothing. The pipeline sets `unparsed_is_failed = True` in `ansible.cfg` (an unparsable inventory is fatal) and asserts in Stage 3 that NetBox returned more than zero hosts.
  
 ![success](https://github.com/Princeton45/evpn-vxlan-gitops/blob/main/images/success-run.png)
-*A full pipeline run: lint → sync → deploy → verify, all green.*
 ---
  
 ## The GitOps loop in action
