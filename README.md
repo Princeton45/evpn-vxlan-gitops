@@ -253,9 +253,7 @@ The path a change takes from an edit to a switch:
 6. **`verify.yml` proves the result** with `show bgp l2vpn evpn summary`, `show ip ospf neighbors`, `show nve peers`, and assertions on each.
 The relational model in NetBox (which enforces correctness) is projected into a flat, render-friendly `local_context_data` blob per device; `nb_inventory` exposes it as `config_context`, and the Jinja template consumes it directly — so NetBox enforces the truth while the blob keeps templating simple.
  
-![NetBox IPAM showing tenant prefixes and assigned IP addresses](docs/img/netbox-ipam.png)
-*NetBox IPAM: tenant prefixes and per-interface IP assignments. Duplicate-IP rejection here is what makes NetBox a trustworthy source of truth.*
- 
+![netbox](https://github.com/Princeton45/evpn-vxlan-gitops/blob/main/images/netbox.png)
 ---
  
 ## The CI/CD pipeline
