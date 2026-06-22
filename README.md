@@ -127,8 +127,12 @@ Everything runs on a single Linux Mint laptop.
  
 ![ansible-node](https://github.com/Princeton45/evpn-vxlan-gitops/blob/main/images/ansible-node.png)
 
-The automation VM has **two NICs**: a **NAT** interface for outbound internet (packages, Docker images, `github.com`) and a **host-only (vmnet1)** interface for the lab management network `192.168.100.0/24`, shared with the GNS3 Cloud node. The self-hosted runner reaches GitHub *outbound* over NAT and the switches over host-only, so no inbound firewall exposure into the lab is required.
+The automation VM has two NICs: a **NAT** interface (vmnet8) for outbound internet (packages, Docker images, `github.com`) and a **host-only (vmnet1)** interface for the lab management network `192.168.100.0/24`, shared with the GNS3 Cloud node. The self-hosted runner reaches GitHub *outbound* over NAT and the switches over host-only, so no inbound firewall exposure into the lab is required.
+
+![vmnet8](https://github.com/Princeton45/evpn-vxlan-gitops/blob/main/images/vmnet8.png)
  
+![vmnet1](https://github.com/Princeton45/evpn-vxlan-gitops/blob/main/images/vmnet1.png)
+
 **Addressing plan:**
  
 | Plane | Range | Notes |
