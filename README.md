@@ -159,17 +159,19 @@ Separating them decouples "can the boxes reach each other" from "what tenants/VL
  
 ### VXLAN
  
-VXLAN wraps an Ethernet frame inside a UDP/IP packet (MAC-in-UDP) tagged with a 24-bit **VNI** — giving ~16 million segments versus ~4,094 usable VLANs, and letting an L2 segment stretch across an L3 fabric. The leaves performing encap/decap are **VTEPs**, sourced from `Loopback1`.
+VXLAN wraps an Ethernet frame inside a UDP/IP packet (MAC-in-UDP) tagged with a 24-bit **VNI** giving ~16 million segments versus ~4,094 usable VLANs, and letting an L2 segment stretch across an L3 fabric. The leaves performing encap/decap are **VTEPs**, sourced from `Loopback1`.
  
 ### EVPN — a BGP control plane instead of flood-and-learn
  
 Classic VXLAN floods to learn MAC addresses. EVPN replaces that with BGP: each leaf advertises the MACs and IPs it learns locally, so remote leaves learn them without flooding. The route types used here:
  
-- **Type-2 (MAC/IP advertisement):** host reachability — each host appears as a MAC-only route and a MAC+IP route.
+- **Type-2 (MAC/IP advertisement):** each host appears as a MAC-only route and a MAC+IP route.
 - **Type-3 (Inclusive Multicast):** per-VNI VTEP discovery for BUM traffic. This design uses **ingress replication** over BGP rather than multicast in the underlay (no PIM required).
 - **Type-5 (IP Prefix):** routed prefixes for inter-subnet/external routing.
-![show l2route evpn mac-ip all on a leaf, showing a locally-attached host and a remote host learned via BGP](docs/img/evpn-mac-learning.png)
-*EVPN control-plane learning in one screen: a locally-attached host shows as `Local`, while the host behind the other leaf is learned via `BGP` with the remote VTEP as next-hop.*
+
+![type2-route](https://github.com/Princeton45/evpn-vxlan-gitops/blob/main/images/type2-route.png)
+
+*EVPN control-plane learning in one screen: Endpoint1 is a locally attached host, marked by `Local`, while Endpoint2 behind the other leaf is learned via `BGP` with the remote VTEP as next-hop.*
  
 ### iBGP with route reflectors
  
