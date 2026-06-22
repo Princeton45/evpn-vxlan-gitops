@@ -182,9 +182,9 @@ Consequently, adding a new leaf only requires establishing two BGP sessions (one
  
 ### Distributed anycast gateway
  
-Every leaf hosts the same SVI IP and anycast MAC for a given subnet (e.g. `10.1.10.1` on both leaves), so a host's default gateway is always local to its leaf — first-hop routing happens on the directly-connected switch with no hair-pinning. A workload can move between leaves without its gateway IP or MAC changing.
+Every leaf hosts the same SVI IP and anycast MAC for a given subnet (e.g. `10.1.10.1` on both leaves), so a host's default gateway is always local to its leaf. First-hop routing happens on the directly-connected switch with no hair-pinning. A workload can move between leaves without its gateway IP or MAC changing.
  
-> One consequence worth knowing: because the anycast gateway IP is identical on every leaf, a remote-host ping sourced *from* a leaf's anycast SVI will not return (the remote leaf answers locally, owning the same IP). Host-to-host traffic works normally; switch-sourced testing must use a unique per-leaf loopback. This is why verification relies on control-plane assertions rather than a leaf-sourced data-plane ping.
+> One thing to mention: because the anycast gateway IP is identical on every leaf, a remote-host ping sourced *from* a leaf's anycast SVI will not return (the remote leaf answers locally, owning the same IP). Host-to-host traffic works normally; switch-sourced testing must use a unique per-leaf loopback. This is why verification relies on control-plane assertions rather than a leaf-sourced data-plane ping.
  
 ### Tenancy: VRF, L2VNI, L3VNI
  
